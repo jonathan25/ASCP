@@ -5,7 +5,7 @@ import java.util.logging.Logger;
 
 public class Main {
     public static void main(String args[]) {
-        try {
+        /*try {
             UIManager.LookAndFeelInfo[] lookAndFeels = UIManager.getInstalledLookAndFeels();
 
             for (int i = 0; i < lookAndFeels.length; i++) {
@@ -23,14 +23,15 @@ public class Main {
             Logger.getLogger(JFrame.class.getName()).log(Level.SEVERE, (String) null, ex);
         } catch (UnsupportedLookAndFeelException ex) {
             Logger.getLogger(JFrame.class.getName()).log(Level.SEVERE, (String) null, ex);
-        }
+        }*/
 
         EventQueue.invokeLater(new Runnable() {
             public void run() {
                 JFrame frame = new JFrame("GUI");
-                frame.setContentPane(new GUI().mainPanel);
+                frame.setContentPane(new GUI(frame).mainPanel);
                 frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
                 frame.pack();
+                frame.setLocationRelativeTo(null);
                 frame.setVisible(true);
             }
         });

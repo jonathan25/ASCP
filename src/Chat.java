@@ -4,6 +4,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 
 public class Chat implements Runnable {
     private int port;
@@ -18,6 +19,8 @@ public class Chat implements Runnable {
     private ServerSocket serverSocket;
 
     private JTextArea textArea;
+
+    private boolean close = false;
 
     public Chat(int port, JTextArea textArea) throws Exception {
         this.port = port;
@@ -63,20 +66,51 @@ public class Chat implements Runnable {
         }
     }
 
+    public void stop() {
+        close = true;
+        try {
+            if (server) {
+                serverSocket.close();
+            }
+        } catch (Exception ex) {
+            System.out.println("WARNING: Exception while trying to stop server socket.");
+        }
+
+        try {
+            socket.close();
+        } catch (Exception ex) {
+            System.out.println("WARNING: Exception while trying to stop socket.");
+        }
+    }
+
     public void run() {
         if (server) {
             try {
                 socket = serverSocket.accept();
+            } catch (SocketException ex) {
+                if (close) {
+                    System.out.println("Server stopped correctly.");
+                } else {
+                    System.out.println("Error while accepting the connection");
+                    ex.printStackTrace();
+                    System.out.println("Thread stopped.");
+                }
+                return;
             } catch (Exception ex) {
                 System.out.println("Error while accepting the connection");
                 ex.printStackTrace();
+                System.out.println("Thread stopped.");
                 return;
             }
         }
 
+        String address = null;
+
         try {
             outputStream = socket.getOutputStream();
             inputStream = socket.getInputStream();
+            address = socket.getInetAddress().getHostAddress();
+            textArea.append("Connected to: " + address + "\n");
         } catch (Exception ex) {
             System.out.println("Error getting streams");
             ex.printStackTrace();
@@ -88,8 +122,6 @@ public class Chat implements Runnable {
                 byte[] data = new byte[256];
                 inputStream.read(data);
 
-                String address = socket.getInetAddress().getHostAddress();
-
                 String message;
                 if (encrypted) {
                     message = DataStructure.getMessage(DataStructure.decryptData(data, key));
@@ -99,8 +131,17 @@ public class Chat implements Runnable {
 
                 textArea.append(address + ": " + message + "\n");
 
+            } catch (SocketException ex) {
+                if (close) {
+                    System.out.println("Socket stopped correctly.");
+                } else {
+                    System.out.println("Error while receiving data.");
+                    System.out.println("Thread stopped.");
+                }
+                return;
             } catch (Exception ex) {
-                System.out.println("Error while receiving data");
+                System.out.println("Error while receiving data.");
+                System.out.println("Thread stopped.");
                 return;
             }
         }

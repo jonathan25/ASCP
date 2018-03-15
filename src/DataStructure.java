@@ -57,10 +57,9 @@ public class DataStructure {
 
         SecretKeySpec secret = new SecretKeySpec(keyBytes, "DES");
 
-        //new IvParameterSpec(new byte[8]);
-        Cipher cipher = null;
-        cipher = Cipher.getInstance("DES/ECB/NoPadding");
-        cipher.init(1, secret);
+
+        Cipher cipher = Cipher.getInstance("DES/ECB/NoPadding");
+        cipher.init(Cipher.ENCRYPT_MODE, secret);
 
         return cipher.doFinal(data);
     }
@@ -68,11 +67,9 @@ public class DataStructure {
     public static byte[] decryptData(byte[] data, String key) throws Exception {
         byte[] keyBytes = key.getBytes();
         SecretKeySpec secret = new SecretKeySpec(keyBytes, "DES");
-        //new IvParameterSpec(new byte[8]);
 
-        Cipher cipher = null;
-        cipher = Cipher.getInstance("DES/ECB/NoPadding");
-        cipher.init(2, secret);
+        Cipher cipher = Cipher.getInstance("DES/ECB/NoPadding");
+        cipher.init(Cipher.DECRYPT_MODE, secret);
 
         return cipher.doFinal(data);
     }
