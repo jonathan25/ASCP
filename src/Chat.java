@@ -2,6 +2,7 @@ import javax.swing.*;
 import javax.xml.crypto.Data;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.math.BigInteger;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
@@ -10,14 +11,20 @@ public class Chat implements Runnable {
     private int port;
     private String hostname;
     private boolean encrypted;
-    private String key;
+    private char[] key;
     private boolean server;
+    private Variables internalVariables = new Variables(new BigInteger("2426697107"), null, new BigInteger("17123207"));
+    private BigInteger q = new BigInteger("2426697107");
+    private BigInteger a = new BigInteger("17123207");
+    private BigInteger x;
+
 
     private InputStream inputStream;
     private OutputStream outputStream;
     private Socket socket;
     private ServerSocket serverSocket;
 
+    private JTextField keyField;
     private JTextArea textArea;
 
     private boolean close = false;
@@ -25,18 +32,18 @@ public class Chat implements Runnable {
     public Chat(int port, JTextArea textArea) throws Exception {
         this.port = port;
         this.server = true;
-        encrypted = false;
+        encrypted = false; //10.34.47.35, 10.34.8.146
         this.textArea = textArea;
         serverSocket = new ServerSocket(port);
 
     }
 
-    public Chat(int port, String key, JTextArea textArea) throws Exception {
+    public Chat(int port, JTextField keyField, JTextArea textArea) throws Exception {
         this.port = port;
         this.server = true;
         encrypted = true;
         this.textArea = textArea;
-        this.key = key;
+        this.keyField = keyField;
         serverSocket = new ServerSocket(port);
     }
 
@@ -48,12 +55,12 @@ public class Chat implements Runnable {
         socket = new Socket(hostname, port);
     }
 
-    public Chat(String hostname, int port, String key, JTextArea textArea) throws Exception {
+    public Chat(String hostname, int port, JTextField keyField, JTextArea textArea) throws Exception {
         encrypted = true;
         this.port = port;
         this.server = false;
         this.textArea = textArea;
-        this.key = key;
+        this.keyField = keyField;
         socket = new Socket(hostname, port);
     }
 
@@ -117,19 +124,45 @@ public class Chat implements Runnable {
             return;
         }
 
+        boolean isInitialization = true;
         while (true) {
             try {
                 byte[] data = new byte[256];
-                inputStream.read(data);
 
                 String message;
-                if (encrypted) {
-                    message = DataStructure.getMessage(DataStructure.decryptData(data, key));
-                } else {
+                if (isInitialization) {
+                    x = DataStructure.randomBigInteger(q);
+                    BigInteger publicY = DataStructure.fastExp(a, x, q);
+
+                    data = DataStructure.getPlainMessage(DataStructure.createInitialization(q, a, publicY));
+                    outputStream.write(data); //send initialization
+
+                    inputStream.read(data); //wait for response
                     message = DataStructure.getMessage(data);
+                    Variables receivedVariables = DataStructure.getVariables(message);
+
+                    BigInteger k = DataStructure.fastExp(receivedVariables.y, x, q);
+
+                    key = DataStructure.validateKey(k);
+                    System.out.println(publicY);
+                    System.out.println(key);
+
+                    isInitialization = false;
+                    if (encrypted) {
+                        keyField.setText(new String(key));
+                    }
+
+                } else {
+                    inputStream.read(data);
+                    if (encrypted) {
+                        System.out.println("key: " + new String(key));
+                        message = DataStructure.getMessage(DataStructure.decryptData(data, key));
+                    } else {
+                        message = DataStructure.getMessage(data);
+                    }
+                    textArea.append(address + ": " + message + "\n");
                 }
 
-                textArea.append(address + ": " + message + "\n");
 
             } catch (SocketException ex) {
                 if (close) {

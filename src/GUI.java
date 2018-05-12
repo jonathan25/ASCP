@@ -1,9 +1,6 @@
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 
 public class GUI {
     private JFrame parent;
@@ -12,14 +9,14 @@ public class GUI {
     private JCheckBox encryptWithKeyCheckBox;
     private JTextField hostnameTextField;
     private JTextField portTextField;
-    private JPasswordField passwordField;
+    private JTextField passwordField;
     private JButton startButton;
-    private JTextField messageTextField;
     JPanel mainPanel;
     private JPanel optionsPanel;
     private JPanel chatPanel;
     private JButton button2;
     private JTextArea chatTextArea;
+    private JTextField messageTextField;
 
     private Chat chat;
 
@@ -43,14 +40,14 @@ public class GUI {
                     int port = Integer.parseInt(portTextField.getText());
                     if (serverRadioButton.isSelected()) {
                         if (encryptWithKeyCheckBox.isSelected()) {
-                            chat = new Chat(port, new String(passwordField.getPassword()), chatTextArea); //ignoring some security things
+                            chat = new Chat(port, passwordField, chatTextArea);
                         } else {
                             chat = new Chat(port, chatTextArea);
                         }
                     } else {
                         String hostname = hostnameTextField.getText();
                         if (encryptWithKeyCheckBox.isSelected()) {
-                            chat = new Chat(hostname, port, new String(passwordField.getPassword()), chatTextArea);  //ignoring some security things
+                            chat = new Chat(hostname, port, passwordField, chatTextArea);
                         } else {
                             chat = new Chat(hostname, port, chatTextArea);
                         }
